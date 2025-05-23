@@ -101,22 +101,14 @@ const showExportButton = () => {
 
 				// 각 텍스트를 별도의 셀로 추가
 				texts.forEach((text) => {
-					if (text.trim()) {
-						// 빈 텍스트 제외
-						const cell = document.createElement("td");
-						cell.innerHTML = /\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|tif)$/i.test(text)
-							? `<img alt="${text}" src="${text}" style="width: 100%; height: 100%; object-fit: contain;" /><span style="display: none;">${text}</span>`
-							: text;
-						tr.appendChild(cell);
-					}
+					// 빈 텍스트 제외
+					if (text.trim() === "") return;
+					const cell = document.createElement("td");
+					cell.innerHTML = /\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|tif)$/i.test(text)
+						? `<img alt="${text}" src="${text}" style="width: 100%; height: 100%; object-fit: contain;" /><span style="display: none;">${text}</span>`
+						: text;
+					tr.appendChild(cell);
 				});
-
-				// 텍스트가 하나도 없는 경우 빈 셀 추가
-				if (texts.length === 0) {
-					const td = document.createElement("td");
-					td.textContent = selectedArea.textContent?.trim() || "-";
-					tr.appendChild(td);
-				}
 
 				table.appendChild(tr);
 			});
@@ -131,7 +123,7 @@ const showExportButton = () => {
 			const preview = window.open("", "_blank");
 			if (preview) {
 				preview.document.write(`
-					<html>
+					<html lang="ko">
 						<head>
 							<title>선택된 데이터 미리보기</title>
 							<style>
