@@ -10,18 +10,18 @@ const EXCLUDED_TEXT = ["javascript:void(0);"];
 
 // 모든 텍스트 노드를 수집하는 함수
 const getAllTextNodes = (element: Element) => {
-	const texts: string[] = [];
+	const textSet = new Set<string>();
 
 	// 현재 요소가 이미지인 경우 src 추가
 	if (element instanceof HTMLImageElement && !EXCLUDED_TEXT.includes(element.src)) {
 		const src = element.src;
-		if (src) texts.push(src);
+		if (src) textSet.add(src);
 	}
 
 	// 현재 요소가 링크인 경우 href 추가
 	if (element instanceof HTMLAnchorElement && !EXCLUDED_TEXT.includes(element.href)) {
 		const href = element.href;
-		if (href) texts.push(href);
+		if (href) textSet.add(href);
 	}
 
 	// 현재 요소의 직접적인 텍스트 노드 처리
@@ -31,18 +31,18 @@ const getAllTextNodes = (element: Element) => {
 		!EXCLUDED_TEXT.includes(element.textContent?.trim() || "")
 	) {
 		const text = element.textContent?.trim();
-		if (text) texts.push(text);
+		if (text) textSet.add(text);
 	}
 
 	// 자식 요소들 순회
 	element.childNodes.forEach((node) => {
 		if (node.nodeType === Node.ELEMENT_NODE) {
 			// 재귀적으로 자식 요소의 텍스트 노드와 이미지 src 수집
-			texts.push(...getAllTextNodes(node as Element));
+			getAllTextNodes(node as Element).forEach((text) => textSet.add(text));
 		}
 	});
 
-	return texts;
+	return [...textSet.values()];
 };
 
 /** 링크 비활성화 */
@@ -104,7 +104,9 @@ const showExportButton = () => {
 					if (text.trim()) {
 						// 빈 텍스트 제외
 						const cell = document.createElement("td");
-						cell.textContent = text;
+						cell.innerHTML = /\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|tif)$/i.test(text)
+							? `<img alt="${text}" src="${text}" style="width: 100%; height: 100%; object-fit: contain;" /><span style="display: none;">${text}</span>`
+							: text;
 						tr.appendChild(cell);
 					}
 				});
@@ -133,7 +135,7 @@ const showExportButton = () => {
 						<head>
 							<title>선택된 데이터 미리보기</title>
 							<style>
-								table { border-collapse: collapse; width: 100%; }
+								table { border-collapse: collapse; width: 100%; table-layout: fixed; }
 								th, td { border: 1px solid #ddd; padding: 8px; }
 								th { background-color: #f5f5f5; }
 							</style>
@@ -194,9 +196,6 @@ const startSelection = () => {
 	});
 
 	selecto.on("select", (e) => {
-		const oldExportButton = window.document.querySelector(".export-button");
-		if (oldExportButton) oldExportButton.remove();
-
 		e.selected.forEach((selectedArea) => {
 			selectedAreas.add(selectedArea);
 			selectedArea.style.backgroundColor = "white";

@@ -70,13 +70,6 @@ const App = () => {
 					초기화
 				</button>
 			</div>
-			<details className={styles.advanced_wrap}>
-				<summary>고급 옵션</summary>
-				<fieldset className={styles.fields_wrap}>
-					<input placeholder="추출할 영역 classname" />
-					<input placeholder="제외할 영역 classname" />
-				</fieldset>
-			</details>
 			{errorMessage && <em className={styles.error_message}>{errorMessage}</em>}
 		</main>
 	);
