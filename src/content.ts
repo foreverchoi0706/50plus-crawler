@@ -1,25 +1,45 @@
 import Selecto from "selecto";
 import * as XLSX from "xlsx";
 
+const MESSAGE_TYPE = {
+	START: "START", // 영역 선택 시작
+	RESET: "RESET", // 영역 선택 초기화
+	PING: "PING", // 컨텐츠 스크립트 확인
+} as const;
+
+const CONTENT_TYPE = {
+	EMPLOYMENT: "EMPLOYMENT", // 일자리
+	LIFESTYLE: "LIFESTYLE", // 복지·건강
+	OTHER: "OTHER", // 중장년 매거진
+} as const;
+// 크롤링 제외할 텍스트
+const EXCLUDED_TEXT = ["javascript:void(0);"];
+// 크롤링 제외할 클래스명
+const EXCLUDED_CLASSNAMES = ["board-board-card-tag"];
+
 let selecto: Selecto | null = null;
 let selectedAreas: Set<HTMLElement | SVGElement> = new Set();
 let overlay: HTMLElement | null = null;
-
-// 크롤링 제외할 텍스트
-const EXCLUDED_TEXT = ["javascript:void(0);"];
+let currentContentType: keyof typeof CONTENT_TYPE = CONTENT_TYPE.EMPLOYMENT;
 
 // 모든 텍스트 노드를 수집하는 함수
 const getAllTextNodes = (element: Element) => {
 	const texts: string[] = [];
 
 	// 현재 요소가 이미지인 경우 src 추가
-	if (element instanceof HTMLImageElement && !EXCLUDED_TEXT.includes(element.src)) {
+	if (
+		element instanceof HTMLImageElement &&
+		!EXCLUDED_TEXT.includes(element.src)
+	) {
 		const src = element.src;
 		if (src) texts.push(src);
 	}
 
 	// 현재 요소가 링크인 경우 href 추가
-	if (element instanceof HTMLAnchorElement && !EXCLUDED_TEXT.includes(element.href)) {
+	if (
+		element instanceof HTMLAnchorElement &&
+		!EXCLUDED_TEXT.includes(element.href)
+	) {
 		const href = element.href;
 		if (href) texts.push(href);
 	}
@@ -28,7 +48,8 @@ const getAllTextNodes = (element: Element) => {
 	if (
 		element.childNodes.length === 1 &&
 		element.childNodes[0].nodeType === Node.TEXT_NODE &&
-		!EXCLUDED_TEXT.includes(element.textContent?.trim() || "")
+		!EXCLUDED_TEXT.includes(element.textContent?.trim() || "") &&
+		!EXCLUDED_CLASSNAMES.includes(element.className)
 	) {
 		const text = element.textContent?.trim();
 		if (text) texts.push(text);
@@ -72,7 +93,7 @@ const showExportButton = () => {
 	removeExportButton();
 	const exportButton = window.document.createElement("button");
 	exportButton.className = "export-button";
-	exportButton.innerHTML = `선택 영역 ${selectedAreas.size}개 추출`;
+	exportButton.innerHTML = `${currentContentType} 선택 영역 ${selectedAreas.size}개 추출`;
 	exportButton.style.position = "fixed";
 	exportButton.style.top = "10px";
 	exportButton.style.right = "10px";
@@ -93,6 +114,7 @@ const showExportButton = () => {
 		try {
 			// 선택된 요소들을 HTML 테이블로 변환
 			const table = document.createElement("table");
+
 			[...selectedAreas.values()].forEach((selectedArea) => {
 				const tr = document.createElement("tr");
 
@@ -100,21 +122,20 @@ const showExportButton = () => {
 				const texts = getAllTextNodes(selectedArea);
 
 				// 각 텍스트를 별도의 셀로 추가
-				texts.forEach((text) => {
+				texts.forEach((text, index) => {
+					// 최초 컨텐츠 타입 추가
+					if (index === 0) {
+						const td = document.createElement("td");
+						td.textContent = currentContentType;
+						tr.appendChild(td);
+					}
+
 					if (text.trim()) {
-						// 빈 텍스트 제외
 						const cell = document.createElement("td");
 						cell.textContent = text;
 						tr.appendChild(cell);
 					}
 				});
-
-				// 텍스트가 하나도 없는 경우 빈 셀 추가
-				if (texts.length === 0) {
-					const td = document.createElement("td");
-					td.textContent = selectedArea.textContent?.trim() || "-";
-					tr.appendChild(td);
-				}
 
 				table.appendChild(tr);
 			});
@@ -124,7 +145,7 @@ const showExportButton = () => {
 			// 워크북 생성 및 저장
 			const workbook = XLSX.utils.book_new();
 			XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-			XLSX.writeFile(workbook, "seoul50plus.xlsx");
+			XLSX.writeFile(workbook, `${currentContentType}.xlsx`);
 			// HTML 테이블 미리보기 (선택사항)
 			const preview = window.open("", "_blank");
 			if (preview) {
@@ -232,15 +253,16 @@ const startAll = () => {
 // 메시지 리스너 설정
 window.chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
 	switch (message.type) {
-		case "PING":
+		case MESSAGE_TYPE.PING:
 			sendResponse({ status: "OK" });
 			return true;
-		case "START":
+		case MESSAGE_TYPE.START:
+			currentContentType = message.contentType;
 			resetAll();
 			startAll();
 			sendResponse({ status: "OK" });
 			return true;
-		case "RESET":
+		case MESSAGE_TYPE.RESET:
 			resetAll();
 			sendResponse({ status: "OK" });
 			return true;
@@ -249,5 +271,6 @@ window.chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
 
 // 키보드 이벤트 리스너 설정
 window.addEventListener("keydown", ({ key }) => {
+	window.alert(key);
 	if (key === "Escape") resetAll();
 });
