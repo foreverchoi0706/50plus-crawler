@@ -14,8 +14,11 @@ const CONTENT_TYPE = {
 } as const;
 // 크롤링 제외할 텍스트
 const EXCLUDED_TEXT = ["javascript:void(0);"];
-// 크롤링 제외할 클래스명
-const EXCLUDED_CLASSNAMES = ["board-board-card-tag"];
+// 크롤링할 클래스명
+const INCLUDED_TEXT_CLASSNAMES = [
+	"board-box__info__title",
+	"board-box__img-wrapper",
+];
 
 let selecto: Selecto | null = null;
 let selectedAreas: Set<HTMLElement | SVGElement> = new Set();
@@ -26,31 +29,31 @@ let currentContentType: keyof typeof CONTENT_TYPE = CONTENT_TYPE.EMPLOYMENT;
 const getAllTextNodes = (element: Element) => {
 	const texts: string[] = [];
 
-	// 현재 요소가 이미지인 경우 src 추가
 	if (
 		element instanceof HTMLImageElement &&
 		!EXCLUDED_TEXT.includes(element.src)
 	) {
+		// 현재 요소가 이미지인 경우 src 추가
 		const src = element.src;
 		if (src) texts.push(src);
 	}
 
-	// 현재 요소가 링크인 경우 href 추가
 	if (
 		element instanceof HTMLAnchorElement &&
 		!EXCLUDED_TEXT.includes(element.href)
 	) {
+		// 현재 요소가 링크인 경우 href 추가
 		const href = element.href;
 		if (href) texts.push(href);
 	}
 
-	// 현재 요소의 직접적인 텍스트 노드 처리
 	if (
 		element.childNodes.length === 1 &&
 		element.childNodes[0].nodeType === Node.TEXT_NODE &&
-		!EXCLUDED_TEXT.includes(element.textContent?.trim() || "") &&
-		!EXCLUDED_CLASSNAMES.includes(element.className)
+		INCLUDED_TEXT_CLASSNAMES.includes(element.className) &&
+		!EXCLUDED_TEXT.includes(element.textContent?.trim() || "")
 	) {
+		// 현재 요소의 직접적인 텍스트 노드 처리
 		const text = element.textContent?.trim();
 		if (text) texts.push(text);
 	}
@@ -130,9 +133,12 @@ const showExportButton = () => {
 						tr.appendChild(td);
 					}
 
-					if (text.trim()) {
+					if (text.trim() !== "") {
 						const cell = document.createElement("td");
-						cell.textContent = text;
+						cell.innerHTML =
+							/\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|tif)$/i.test(text)
+								? `<img alt="${text}" src="${text}" style="width: 100%; height: 100%; object-fit: contain;" /><span style="display: none;">${text}</span>`
+								: text;
 						tr.appendChild(cell);
 					}
 				});
@@ -271,6 +277,5 @@ window.chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
 
 // 키보드 이벤트 리스너 설정
 window.addEventListener("keydown", ({ key }) => {
-	window.alert(key);
 	if (key === "Escape") resetAll();
 });
