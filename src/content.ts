@@ -18,6 +18,7 @@ const EXCLUDED_TEXT = ["javascript:void(0);"];
 const INCLUDED_TEXT_CLASSNAMES = [
 	"board-box__info__title",
 	"board-box__img-wrapper",
+	"board-card__custom-height-img",
 ];
 
 let selecto: Selecto | null = null;
@@ -31,6 +32,7 @@ const getAllTextNodes = (element: Element) => {
 
 	if (
 		element instanceof HTMLImageElement &&
+		INCLUDED_TEXT_CLASSNAMES.includes(element.className) &&
 		!EXCLUDED_TEXT.includes(element.src)
 	) {
 		// 현재 요소가 이미지인 경우 src 추가
