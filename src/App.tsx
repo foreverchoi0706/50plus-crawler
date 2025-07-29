@@ -66,7 +66,10 @@ const App: FC = () => {
 
 	return (
 		<main className={styles.main}>
-			<h1 className={styles.title}>서울시50플러스포털 크롤러</h1>
+			<div className={styles.title_wrap}>
+				<img width={30} height={30} src="/icons/logo.png" alt="logo" />
+				<h1>서울시50플러스포털 크롤러</h1>
+			</div>
 			<p>
 				서울시50플러스포털크롤러는 서울시50플러스포털의 컨텐츠를 추출하는 확장
 				프로그램입니다
