@@ -139,6 +139,13 @@ const showExportButton = () => {
 				// 모든 텍스트 노드 수집
 				const texts = getAllTextNodes(selectedArea);
 
+				if (
+					currentContentType === CONTENT_TYPE.EMPLOYMENT ||
+					currentContentType === CONTENT_TYPE.LIFESTYLE
+				) {
+					texts.splice(1, 0, "");
+				}
+
 				console.log(new Set(texts));
 
 				// Set으로 중복 제거 후 각 텍스트를 별도의 셀로 추가
@@ -152,24 +159,12 @@ const showExportButton = () => {
 						tr.appendChild(td);
 					}
 
-					if (
-						index === 2 &&
-						(currentContentType === CONTENT_TYPE.EMPLOYMENT ||
-							currentContentType === CONTENT_TYPE.LIFESTYLE)
-					) {
-						const td = document.createElement("td");
-						td.textContent = "썸네일";
-						tr.appendChild(td);
-					}
-
-					if (text.trim() !== "") {
-						const cell = document.createElement("td");
-						cell.innerHTML =
-							/\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|tif)$/i.test(text)
-								? `<img alt="${text}" src="${text}" style="width: 100%; height: 100%; object-fit: contain;" /><span style="display: none;">${text}</span>`
-								: text;
-						tr.appendChild(cell);
-					}
+					const cell = document.createElement("td");
+					cell.innerHTML =
+						/\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|tif)$/i.test(text)
+							? `<img alt="${text}" src="${text}" style="width: 100%; height: 100%; object-fit: contain;" /><span style="display: none;">${text}</span>`
+							: text;
+					tr.appendChild(cell);
 				});
 
 				table.appendChild(tr);
