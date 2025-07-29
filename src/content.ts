@@ -1,23 +1,30 @@
 import Selecto from "selecto";
 import * as XLSX from "xlsx";
 
+/** 메시지 타입 */
 const MESSAGE_TYPE = {
 	START: "START", // 영역 선택 시작
 	RESET: "RESET", // 영역 선택 초기화
 	PING: "PING", // 컨텐츠 스크립트 확인
 } as const;
-
+/** 컨텐츠 타입 */
 const CONTENT_TYPE = {
 	EMPLOYMENT: "EMPLOYMENT", // 일자리
 	LIFESTYLE: "LIFESTYLE", // 복지·건강
 	OTHER: "OTHER", // 중장년 매거진
 } as const;
-// 크롤링 제외할 텍스트
-const EXCLUDED_TEXT = ["javascript:void(0);"];
+/** 컨텐츠 타입 */
+const CONTENT_TYPE_KO = {
+	EMPLOYMENT: "일자리",
+	LIFESTYLE: "복지·건강",
+	OTHER: "중장년 매거진",
+} as const;
+
 // 크롤링할 클래스명
-const INCLUDED_TEXT_CLASSNAMES = [
+const TARGET_CLASSNAMES = [
 	"board-box__info__title",
 	"board-box__img-wrapper",
+	"board-card__info__title",
 	"board-card__custom-height-img",
 ];
 
@@ -30,30 +37,26 @@ let currentContentType: keyof typeof CONTENT_TYPE = CONTENT_TYPE.EMPLOYMENT;
 const getAllTextNodes = (element: Element) => {
 	const texts: string[] = [];
 
-	if (
-		element instanceof HTMLImageElement &&
-		INCLUDED_TEXT_CLASSNAMES.includes(element.className) &&
-		!EXCLUDED_TEXT.includes(element.src)
-	) {
-		// 현재 요소가 이미지인 경우 src 추가
-		const src = element.src;
-		if (src) texts.push(src);
-	}
-
-	if (
-		element instanceof HTMLAnchorElement &&
-		!EXCLUDED_TEXT.includes(element.href)
-	) {
-		// 현재 요소가 링크인 경우 href 추가
-		const href = element.href;
+	// 현재 요소가 링크인 경우 href 추가
+	if (element instanceof HTMLAnchorElement) {
+		const { href } = element;
 		if (href) texts.push(href);
 	}
 
+	// 현재 요소가 이미지인 경우 src 추가
+	if (
+		element instanceof HTMLImageElement &&
+		TARGET_CLASSNAMES.includes(element.className)
+	) {
+		const { src } = element;
+		if (src) texts.push(src);
+	}
+
+	// 현재 요소의 텍스트 노드 처리
 	if (
 		element.childNodes.length === 1 &&
 		element.childNodes[0].nodeType === Node.TEXT_NODE &&
-		INCLUDED_TEXT_CLASSNAMES.includes(element.className) &&
-		!EXCLUDED_TEXT.includes(element.textContent?.trim() || "")
+		TARGET_CLASSNAMES.includes(element.className)
 	) {
 		// 현재 요소의 직접적인 텍스트 노드 처리
 		const text = element.textContent?.trim();
@@ -98,7 +101,7 @@ const showExportButton = () => {
 	removeExportButton();
 	const exportButton = window.document.createElement("button");
 	exportButton.className = "export-button";
-	exportButton.innerHTML = `${currentContentType} 선택 영역 ${selectedAreas.size}개 추출`;
+	exportButton.innerHTML = `${CONTENT_TYPE_KO[currentContentType]} 선택 영역 ${selectedAreas.size}개 추출`;
 	exportButton.style.position = "fixed";
 	exportButton.style.top = "10px";
 	exportButton.style.right = "10px";
@@ -126,8 +129,8 @@ const showExportButton = () => {
 				// 모든 텍스트 노드 수집
 				const texts = getAllTextNodes(selectedArea);
 
-				// 각 텍스트를 별도의 셀로 추가
-				texts.forEach((text, index) => {
+				// Set으로 중복 제거 후 각 텍스트를 별도의 셀로 추가
+				[...new Set(texts).values()].forEach((text, index) => {
 					// 최초 컨텐츠 타입 추가
 					if (index === 0) {
 						const td = document.createElement("td");

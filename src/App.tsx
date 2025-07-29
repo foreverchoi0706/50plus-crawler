@@ -1,19 +1,20 @@
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, FC, useState } from "react";
 import styles from "./App.module.css";
 
+/** 메시지 타입 */
 const MESSAGE_TYPE = {
 	START: "START", // 영역 선택 시작
 	RESET: "RESET", // 영역 선택 초기화
 	PING: "PING", // 컨텐츠 스크립트 확인
 } as const;
-
+/** 컨텐츠 타입 */
 const CONTENT_TYPE = {
 	EMPLOYMENT: "EMPLOYMENT", // 일자리
 	LIFESTYLE: "LIFESTYLE", // 복지·건강
 	OTHER: "OTHER", // 중장년 매거진
 } as const;
 
-const App = () => {
+const App: FC = () => {
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [contentType, setContentType] = useState<keyof typeof CONTENT_TYPE>(
 		CONTENT_TYPE.EMPLOYMENT,
