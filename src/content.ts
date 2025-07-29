@@ -6,6 +6,9 @@ const MESSAGE_TYPE = {
 	START: "START", // 영역 선택 시작
 	RESET: "RESET", // 영역 선택 초기화
 	PING: "PING", // 컨텐츠 스크립트 확인
+	LINK_EMPLOYMENT: "LINK_EMPLOYMENT", // 일자리 링크 이동
+	LINK_LIFESTYLE: "LINK_LIFESTYLE", // 복지·건강 링크 이동
+	LINK_OTHER: "LINK_OTHER", // 중장년 매거진 링크 이동
 } as const;
 /** 컨텐츠 타입 */
 const CONTENT_TYPE = {
@@ -19,7 +22,8 @@ const CONTENT_TYPE_KO = {
 	LIFESTYLE: "복지·건강",
 	OTHER: "중장년 매거진",
 } as const;
-
+// 제외할 텍스트
+const EXCLUDED_TEXT = ["javascript:void(0);"];
 // 크롤링할 클래스명
 const TARGET_CLASSNAMES = [
 	"board-box__info__title",
@@ -38,7 +42,10 @@ const getAllTextNodes = (element: Element) => {
 	const texts: string[] = [];
 
 	// 현재 요소가 링크인 경우 href 추가
-	if (element instanceof HTMLAnchorElement) {
+	if (
+		element instanceof HTMLAnchorElement &&
+		!EXCLUDED_TEXT.includes(element.href)
+	) {
 		const { href } = element;
 		if (href) texts.push(href);
 	}
@@ -56,7 +63,8 @@ const getAllTextNodes = (element: Element) => {
 	if (
 		element.childNodes.length === 1 &&
 		element.childNodes[0].nodeType === Node.TEXT_NODE &&
-		TARGET_CLASSNAMES.includes(element.className)
+		TARGET_CLASSNAMES.includes(element.className) &&
+		!EXCLUDED_TEXT.includes(element.textContent?.trim() || "")
 	) {
 		// 현재 요소의 직접적인 텍스트 노드 처리
 		const text = element.textContent?.trim();
@@ -123,18 +131,34 @@ const showExportButton = () => {
 			// 선택된 요소들을 HTML 테이블로 변환
 			const table = document.createElement("table");
 
-			[...selectedAreas.values()].forEach((selectedArea) => {
+			const selectedAreasArray = [...selectedAreas.values()];
+
+			selectedAreasArray.forEach((selectedArea) => {
 				const tr = document.createElement("tr");
 
 				// 모든 텍스트 노드 수집
 				const texts = getAllTextNodes(selectedArea);
 
+				console.log(new Set(texts));
+
 				// Set으로 중복 제거 후 각 텍스트를 별도의 셀로 추가
 				[...new Set(texts).values()].forEach((text, index) => {
+					console.log(text);
+
 					// 최초 컨텐츠 타입 추가
 					if (index === 0) {
 						const td = document.createElement("td");
 						td.textContent = currentContentType;
+						tr.appendChild(td);
+					}
+
+					if (
+						index === 2 &&
+						(currentContentType === CONTENT_TYPE.EMPLOYMENT ||
+							currentContentType === CONTENT_TYPE.LIFESTYLE)
+					) {
+						const td = document.createElement("td");
+						td.textContent = "썸네일";
 						tr.appendChild(td);
 					}
 
@@ -277,6 +301,15 @@ window.chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
 			resetAll();
 			sendResponse({ status: "OK" });
 			return true;
+		case MESSAGE_TYPE.LINK_EMPLOYMENT:
+			window.location.href = "https://50plus.or.kr/PolicyInfo_Job.do";
+			return true;
+		case MESSAGE_TYPE.LINK_LIFESTYLE:
+			window.location.href =
+				"https://50plus.or.kr/PolicyInfo_Welfare-Health.do";
+			return true;
+		case MESSAGE_TYPE.LINK_OTHER:
+			window.location.href = "https://50plus.or.kr/Magazine.do";
 	}
 });
 

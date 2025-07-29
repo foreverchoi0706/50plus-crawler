@@ -6,6 +6,9 @@ const MESSAGE_TYPE = {
 	START: "START", // 영역 선택 시작
 	RESET: "RESET", // 영역 선택 초기화
 	PING: "PING", // 컨텐츠 스크립트 확인
+	LINK_EMPLOYMENT: "LINK_EMPLOYMENT", // 일자리 링크 이동
+	LINK_LIFESTYLE: "LINK_LIFESTYLE", // 복지·건강 링크 이동
+	LINK_OTHER: "LINK_OTHER", // 중장년 매거진 링크 이동
 } as const;
 /** 컨텐츠 타입 */
 const CONTENT_TYPE = {
@@ -77,14 +80,9 @@ const App: FC = () => {
 			<p>오류 및 문의사항은 비즈플랫폼 개발팀 최영원에게 문의 주세요</p>
 			<fieldset className={styles.fields_wrap}>
 				<label>
-					<a
-						title="일자리"
-						href="https://50plus.or.kr/PolicyInfo_Job.do"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
+					<button onClick={() => sendMessage(MESSAGE_TYPE.LINK_EMPLOYMENT)}>
 						일자리
-					</a>
+					</button>
 					<input
 						type="radio"
 						name="contentType"
@@ -94,14 +92,9 @@ const App: FC = () => {
 					/>
 				</label>
 				<label>
-					<a
-						title="복지·건강"
-						href="https://50plus.or.kr/PolicyInfo_Welfare-Health.do"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
+					<button onClick={() => sendMessage(MESSAGE_TYPE.LINK_LIFESTYLE)}>
 						복지·건강
-					</a>
+					</button>
 					<input
 						type="radio"
 						name="contentType"
@@ -111,14 +104,9 @@ const App: FC = () => {
 					/>
 				</label>
 				<label>
-					<a
-						title="중장년 매거진"
-						href="https://50plus.or.kr/Magazine.do"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
+					<button onClick={() => sendMessage(MESSAGE_TYPE.LINK_OTHER)}>
 						중장년 매거진
-					</a>
+					</button>
 					<input
 						type="radio"
 						name="contentType"
