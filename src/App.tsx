@@ -37,8 +37,15 @@ const App: FC = () => {
 				active: true,
 				currentWindow: true,
 			});
-			if (tab.id === undefined)
+			if (tab.id === undefined) {
 				return setErrorMessage("탭을 찾을 수 없습니다.");
+			}
+
+			if (tab.url && tab.url.startsWith("chrome://")) {
+				return setErrorMessage(
+					"Chrome 홈 및 설정 페이지에서는 사용할 수 없습니다. 일반 웹페이지에서 사용해주세요.",
+				);
+			}
 
 			// content script가 이미 로드되어 있는지 확인
 			try {
@@ -60,9 +67,7 @@ const App: FC = () => {
 			});
 			setErrorMessage(null);
 		} catch (err) {
-			setErrorMessage(
-				"영역 선택을 시작할 수 없습니다. 페이지를 새로고침 후 다시 시도해주세요.",
-			);
+			setErrorMessage(JSON.stringify(err));
 			console.error(err);
 		}
 	};
@@ -80,7 +85,10 @@ const App: FC = () => {
 			<p>오류 및 문의사항은 비즈플랫폼 개발팀 최영원에게 문의 주세요</p>
 			<fieldset className={styles.fields_wrap}>
 				<label>
-					<button onClick={() => sendMessage(MESSAGE_TYPE.LINK_EMPLOYMENT)}>
+					<button
+						type="button"
+						onClick={() => sendMessage(MESSAGE_TYPE.LINK_EMPLOYMENT)}
+					>
 						일자리
 					</button>
 					<input
@@ -92,7 +100,10 @@ const App: FC = () => {
 					/>
 				</label>
 				<label>
-					<button onClick={() => sendMessage(MESSAGE_TYPE.LINK_LIFESTYLE)}>
+					<button
+						type="button"
+						onClick={() => sendMessage(MESSAGE_TYPE.LINK_LIFESTYLE)}
+					>
 						복지·건강
 					</button>
 					<input
@@ -104,7 +115,10 @@ const App: FC = () => {
 					/>
 				</label>
 				<label>
-					<button onClick={() => sendMessage(MESSAGE_TYPE.LINK_OTHER)}>
+					<button
+						type="button"
+						onClick={() => sendMessage(MESSAGE_TYPE.LINK_OTHER)}
+					>
 						중장년 매거진
 					</button>
 					<input
