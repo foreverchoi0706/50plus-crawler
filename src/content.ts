@@ -143,7 +143,7 @@ const showExportButton = () => {
 					currentContentType === CONTENT_TYPE.EMPLOYMENT ||
 					currentContentType === CONTENT_TYPE.LIFESTYLE
 				) {
-					texts.splice(1, 0, "");
+					texts.splice(1, 0, "-");
 				}
 
 				console.log(new Set(texts));
@@ -175,7 +175,7 @@ const showExportButton = () => {
 			// 워크북 생성 및 저장
 			const workbook = XLSX.utils.book_new();
 			XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-			XLSX.writeFile(workbook, `${currentContentType}.xlsx`);
+			XLSX.writeFile(workbook, "seoul50plus.xlsx");
 			// HTML 테이블 미리보기 (선택사항)
 			const preview = window.open("", "_blank");
 			if (preview) {
