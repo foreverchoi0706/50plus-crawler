@@ -1,4 +1,4 @@
-import { ChangeEvent, FC, useState } from "react";
+import { FC, useState } from "react";
 import styles from "./App.module.css";
 
 /** 메시지 타입 */
@@ -6,26 +6,14 @@ const MESSAGE_TYPE = {
 	START: "START", // 영역 선택 시작
 	RESET: "RESET", // 영역 선택 초기화
 	PING: "PING", // 컨텐츠 스크립트 확인
+	LINK_EDUCATION: "LINK_EDUCATION", // 교육·문화 링크 이동
 	LINK_EMPLOYMENT: "LINK_EMPLOYMENT", // 일자리 링크 이동
 	LINK_LIFESTYLE: "LINK_LIFESTYLE", // 복지·건강 링크 이동
 	LINK_OTHER: "LINK_OTHER", // 중장년 매거진 링크 이동
 } as const;
-/** 컨텐츠 타입 */
-const CONTENT_TYPE = {
-	EMPLOYMENT: "EMPLOYMENT", // 일자리
-	LIFESTYLE: "LIFESTYLE", // 복지·건강
-	OTHER: "OTHER", // 중장년 매거진
-} as const;
 
 const App: FC = () => {
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
-	const [contentType, setContentType] = useState<keyof typeof CONTENT_TYPE>(
-		CONTENT_TYPE.EMPLOYMENT,
-	);
-
-	const onContentTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
-		setContentType(e.target.value as keyof typeof CONTENT_TYPE);
-	};
 
 	const sendMessage = async (messageType: keyof typeof MESSAGE_TYPE) => {
 		if (window.chrome === undefined || window.chrome.tabs === undefined)
@@ -41,7 +29,7 @@ const App: FC = () => {
 				return setErrorMessage("탭을 찾을 수 없습니다.");
 			}
 
-			if (tab.url && tab.url.startsWith("chrome://")) {
+			if (tab.url !== undefined && tab.url.startsWith("chrome://")) {
 				return setErrorMessage(
 					"Chrome 홈 및 설정 페이지에서는 사용할 수 없습니다. 일반 웹페이지에서 사용해주세요.",
 				);
@@ -61,10 +49,7 @@ const App: FC = () => {
 			}
 
 			// 메시지 전송
-			await window.chrome.tabs.sendMessage(tab.id, {
-				type: messageType,
-				contentType,
-			});
+			await window.chrome.tabs.sendMessage(tab.id, { type: messageType });
 			setErrorMessage(null);
 		} catch (err) {
 			setErrorMessage(JSON.stringify(err));
@@ -83,51 +68,38 @@ const App: FC = () => {
 				프로그램입니다
 			</p>
 			<p>오류 및 문의사항은 비즈플랫폼 개발팀 최영원에게 문의 주세요</p>
-			<fieldset className={styles.fields_wrap}>
+			<fieldset className={styles.fieldset}>
 				<label>
 					<button
 						type="button"
 						onClick={() => sendMessage(MESSAGE_TYPE.LINK_EMPLOYMENT)}
 					>
-						일자리
+						{">"} 일자리
 					</button>
-					<input
-						type="radio"
-						name="contentType"
-						value={CONTENT_TYPE.EMPLOYMENT}
-						checked={contentType === CONTENT_TYPE.EMPLOYMENT}
-						onChange={onContentTypeChange}
-					/>
 				</label>
 				<label>
 					<button
 						type="button"
 						onClick={() => sendMessage(MESSAGE_TYPE.LINK_LIFESTYLE)}
 					>
-						복지·건강
+						{">"} 복지·건강
 					</button>
-					<input
-						type="radio"
-						name="contentType"
-						value={CONTENT_TYPE.LIFESTYLE}
-						checked={contentType === CONTENT_TYPE.LIFESTYLE}
-						onChange={onContentTypeChange}
-					/>
+				</label>
+				<label>
+					<button
+						type="button"
+						onClick={() => sendMessage(MESSAGE_TYPE.LINK_EDUCATION)}
+					>
+						{">"} 교육·문화
+					</button>
 				</label>
 				<label>
 					<button
 						type="button"
 						onClick={() => sendMessage(MESSAGE_TYPE.LINK_OTHER)}
 					>
-						중장년 매거진
+						{">"} 중장년 매거진
 					</button>
-					<input
-						type="radio"
-						name="contentType"
-						value={CONTENT_TYPE.OTHER}
-						checked={contentType === CONTENT_TYPE.OTHER}
-						onChange={onContentTypeChange}
-					/>
 				</label>
 			</fieldset>
 			<div className={styles.buttons_wrap}>

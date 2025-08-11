@@ -1,5 +1,5 @@
 .main {
-	width: 300px;
+	width: 320px;
 	padding: 16px;
 }
 
@@ -13,12 +13,12 @@
 	}
 }
 
-.fields_wrap {
+.fieldset {
 	display: flex;
 	gap: 8px;
 	padding: 0;
 	border: none;
-	padding: 8px 16px;
+	padding: 8px 0;
 	justify-content: space-between;
 	& > label {
 		display: flex;

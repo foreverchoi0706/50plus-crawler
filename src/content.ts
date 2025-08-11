@@ -6,21 +6,23 @@ const MESSAGE_TYPE = {
 	START: "START", // 영역 선택 시작
 	RESET: "RESET", // 영역 선택 초기화
 	PING: "PING", // 컨텐츠 스크립트 확인
+	LINK_EDUCATION: "LINK_EDUCATION", // 교육·문화 링크 이동
 	LINK_EMPLOYMENT: "LINK_EMPLOYMENT", // 일자리 링크 이동
 	LINK_LIFESTYLE: "LINK_LIFESTYLE", // 복지·건강 링크 이동
 	LINK_OTHER: "LINK_OTHER", // 중장년 매거진 링크 이동
 } as const;
 /** 컨텐츠 타입 */
 const CONTENT_TYPE = {
+	EDUCATION: "EDUCATION", // 교육·문화
 	EMPLOYMENT: "EMPLOYMENT", // 일자리
 	LIFESTYLE: "LIFESTYLE", // 복지·건강
 	OTHER: "OTHER", // 중장년 매거진
 } as const;
-/** 컨텐츠 타입 */
-const CONTENT_TYPE_KO = {
-	EMPLOYMENT: "일자리",
-	LIFESTYLE: "복지·건강",
-	OTHER: "중장년 매거진",
+const LINK_CONTENT_TYPE = {
+	["https://50plus.or.kr/PolicyInfo_Job.do"]: CONTENT_TYPE.EMPLOYMENT,
+	["https://50plus.or.kr/PolicyInfo_Edu-Culture.do"]: CONTENT_TYPE.EDUCATION,
+	["https://50plus.or.kr/PolicyInfo_Welfare-Health.do"]: CONTENT_TYPE.LIFESTYLE,
+	["https://50plus.or.kr/Magazine.do"]: CONTENT_TYPE.OTHER,
 } as const;
 // 제외할 텍스트
 const EXCLUDED_TEXT = ["javascript:void(0);"];
@@ -109,7 +111,7 @@ const showExportButton = () => {
 	removeExportButton();
 	const exportButton = window.document.createElement("button");
 	exportButton.className = "export-button";
-	exportButton.innerHTML = `${CONTENT_TYPE_KO[currentContentType]} 선택 영역 ${selectedAreas.size}개 추출`;
+	exportButton.innerHTML = `${LINK_CONTENT_TYPE[window.location.href as keyof typeof LINK_CONTENT_TYPE]} 선택 영역 ${selectedAreas.size}개 추출`;
 	exportButton.style.position = "fixed";
 	exportButton.style.top = "10px";
 	exportButton.style.right = "10px";
@@ -139,19 +141,21 @@ const showExportButton = () => {
 				// 모든 텍스트 노드 수집
 				const texts = getAllTextNodes(selectedArea);
 
-				if (
-					currentContentType === CONTENT_TYPE.EMPLOYMENT ||
-					currentContentType === CONTENT_TYPE.LIFESTYLE
-				) {
+				if (currentContentType !== CONTENT_TYPE.OTHER) {
 					texts.splice(1, 0, "-");
 				}
 
-				console.log(new Set(texts));
+				texts.forEach((text) => {
+					if (text.startsWith("http")) {
+						const url = new URL(text);
+						if (url.searchParams.get("id")) {
+							texts.push(url.searchParams.get("id") || "-");
+						}
+					}
+				});
 
 				// Set으로 중복 제거 후 각 텍스트를 별도의 셀로 추가
 				[...new Set(texts).values()].forEach((text, index) => {
-					console.log(text);
-
 					// 최초 컨텐츠 타입 추가
 					if (index === 0) {
 						const td = document.createElement("td");
@@ -225,6 +229,12 @@ const showOverlay = () => {
 
 /** 영역 선택 시작*/
 const startSelection = () => {
+	if (!Object.keys(LINK_CONTENT_TYPE).includes(window.location.href)) {
+		alert("영역 선택 불가능한 페이지입니다.");
+		resetAll();
+		return;
+	}
+
 	selecto = new Selecto({
 		container: document.body,
 		rootContainer: document.body,
@@ -287,7 +297,10 @@ window.chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
 			sendResponse({ status: "OK" });
 			return true;
 		case MESSAGE_TYPE.START:
-			currentContentType = message.contentType;
+			currentContentType =
+				LINK_CONTENT_TYPE[
+					window.location.href as keyof typeof LINK_CONTENT_TYPE
+				];
 			resetAll();
 			startAll();
 			sendResponse({ status: "OK" });
@@ -298,6 +311,9 @@ window.chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
 			return true;
 		case MESSAGE_TYPE.LINK_EMPLOYMENT:
 			window.location.href = "https://50plus.or.kr/PolicyInfo_Job.do";
+			return true;
+		case MESSAGE_TYPE.LINK_EDUCATION:
+			window.location.href = "https://50plus.or.kr/PolicyInfo_Edu-Culture.do";
 			return true;
 		case MESSAGE_TYPE.LINK_LIFESTYLE:
 			window.location.href =
