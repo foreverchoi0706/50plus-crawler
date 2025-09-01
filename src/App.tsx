@@ -1,13 +1,18 @@
-import { useState } from "react";
+import { FC, useState } from "react";
 import styles from "./App.module.css";
 
-export const MESSAGE_TYPE = {
-	START: "START",
-	RESET: "RESET",
-	PING: "PING",
+/** 메시지 타입 */
+const MESSAGE_TYPE = {
+	START: "START", // 영역 선택 시작
+	RESET: "RESET", // 영역 선택 초기화
+	PING: "PING", // 컨텐츠 스크립트 확인
+	LINK_EDUCATION: "LINK_EDUCATION", // 교육·문화 링크 이동
+	LINK_EMPLOYMENT: "LINK_EMPLOYMENT", // 일자리 링크 이동
+	LINK_LIFESTYLE: "LINK_LIFESTYLE", // 복지·건강 링크 이동
+	LINK_OTHER: "LINK_OTHER", // 중장년 매거진 링크 이동
 } as const;
 
-const App = () => {
+const App: FC = () => {
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
 	const sendMessage = async (messageType: keyof typeof MESSAGE_TYPE) => {
@@ -16,12 +21,25 @@ const App = () => {
 
 		try {
 			// 현재 활성화된 탭 가져오기
-			const [tab] = await window.chrome.tabs.query({ active: true, currentWindow: true });
-			if (tab.id === undefined) return setErrorMessage("탭을 찾을 수 없습니다.");
+			const [tab] = await window.chrome.tabs.query({
+				active: true,
+				currentWindow: true,
+			});
+			if (tab.id === undefined) {
+				return setErrorMessage("탭을 찾을 수 없습니다.");
+			}
+
+			if (tab.url !== undefined && tab.url.startsWith("chrome://")) {
+				return setErrorMessage(
+					"Chrome 홈 및 설정 페이지에서는 사용할 수 없습니다. 일반 웹페이지에서 사용해주세요.",
+				);
+			}
 
 			// content script가 이미 로드되어 있는지 확인
 			try {
-				await window.chrome.tabs.sendMessage(tab.id, { type: MESSAGE_TYPE.PING });
+				await window.chrome.tabs.sendMessage(tab.id, {
+					type: MESSAGE_TYPE.PING,
+				});
 			} catch {
 				// content script가 로드되어 있지 않으면 주입
 				await window.chrome.scripting.executeScript({
@@ -34,7 +52,7 @@ const App = () => {
 			await window.chrome.tabs.sendMessage(tab.id, { type: messageType });
 			setErrorMessage(null);
 		} catch (err) {
-			setErrorMessage("영역 선택을 시작할 수 없습니다. 페이지를 새로고침 후 다시 시도해주세요.");
+			setErrorMessage(JSON.stringify(err));
 			console.error(err);
 		}
 	};
@@ -42,18 +60,48 @@ const App = () => {
 	return (
 		<main className={styles.main}>
 			<div className={styles.title_wrap}>
-				<h1 className={styles.title}>서울시50플러스포털 크롤러</h1>
-				<a
-					className={styles.title_link}
-					href="https://50plus.or.kr"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					바로가기
-				</a>
+				<img width={30} height={30} src="/icons/logo.png" alt="logo" />
+				<h1>서울시50플러스포털 크롤러</h1>
 			</div>
-			<p>서울시50플러스포털크롤러는 서울시50플러스포털의 컨텐츠를 추출하는 확장 프로그램입니다</p>
+			<p>
+				서울시50플러스포털크롤러는 서울시50플러스포털의 컨텐츠를 추출하는 확장
+				프로그램입니다
+			</p>
 			<p>오류 및 문의사항은 비즈플랫폼 개발팀 최영원에게 문의 주세요</p>
+			<fieldset className={styles.fieldset}>
+				<label>
+					<button
+						type="button"
+						onClick={() => sendMessage(MESSAGE_TYPE.LINK_EMPLOYMENT)}
+					>
+						{">"} 일자리
+					</button>
+				</label>
+				<label>
+					<button
+						type="button"
+						onClick={() => sendMessage(MESSAGE_TYPE.LINK_LIFESTYLE)}
+					>
+						{">"} 복지·건강
+					</button>
+				</label>
+				<label>
+					<button
+						type="button"
+						onClick={() => sendMessage(MESSAGE_TYPE.LINK_EDUCATION)}
+					>
+						{">"} 교육·문화
+					</button>
+				</label>
+				<label>
+					<button
+						type="button"
+						onClick={() => sendMessage(MESSAGE_TYPE.LINK_OTHER)}
+					>
+						{">"} 중장년 매거진
+					</button>
+				</label>
+			</fieldset>
 			<div className={styles.buttons_wrap}>
 				<button
 					onClick={() => sendMessage(MESSAGE_TYPE.START)}
