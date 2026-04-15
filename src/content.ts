@@ -19,10 +19,10 @@ const CONTENT_TYPE = {
   OTHER: "OTHER", // 중장년 매거진
 } as const;
 const LINK_CONTENT_TYPE = {
-  ["/PolicyInfo_Job.do"]: CONTENT_TYPE.EMPLOYMENT,
-  ["/PolicyInfo_Edu-Culture.do"]: CONTENT_TYPE.EDUCATION,
-  ["/PolicyInfo_Welfare-Health.do"]: CONTENT_TYPE.LIFESTYLE,
-  ["/Magazine.do"]: CONTENT_TYPE.OTHER,
+  ["/life/PolicyInfo_Job.do"]: CONTENT_TYPE.EMPLOYMENT,
+  ["/life/PolicyInfo_Edu-Culture.do"]: CONTENT_TYPE.EDUCATION,
+  ["/life/PolicyInfo_Welfare-Health.do"]: CONTENT_TYPE.LIFESTYLE,
+  ["/life/Magazine.do"]: CONTENT_TYPE.OTHER,
 } as const;
 // 제외할 텍스트
 const EXCLUDED_TEXT = ["javascript:void(0);"];
@@ -63,7 +63,7 @@ const getAllTextNodes = (element: Element) => {
 
   console.log(
     TARGET_CLASSNAMES.includes(element.className) &&
-      !EXCLUDED_TEXT.includes(element.textContent?.trim() || "")
+      !EXCLUDED_TEXT.includes(element.textContent?.trim() || ""),
   );
 
   // 현재 요소의 텍스트 노드 처리
@@ -311,17 +311,18 @@ window.chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
       sendResponse({ status: "OK" });
       return true;
     case MESSAGE_TYPE.LINK_EMPLOYMENT:
-      window.location.href = "https://50plus.or.kr/PolicyInfo_Job.do";
+      window.location.href = "https://50plus.or.kr/life/PolicyInfo_Job.do";
       return true;
     case MESSAGE_TYPE.LINK_EDUCATION:
-      window.location.href = "https://50plus.or.kr/PolicyInfo_Edu-Culture.do";
+      window.location.href =
+        "https://50plus.or.kr/life/PolicyInfo_Edu-Culture.do";
       return true;
     case MESSAGE_TYPE.LINK_LIFESTYLE:
       window.location.href =
-        "https://50plus.or.kr/PolicyInfo_Welfare-Health.do";
+        "https://50plus.or.kr/life/PolicyInfo_Welfare-Health.do";
       return true;
     case MESSAGE_TYPE.LINK_OTHER:
-      window.location.href = "https://50plus.or.kr/Magazine.do";
+      window.location.href = "https://50plus.or.kr/life/agazine.do";
   }
 });
 
